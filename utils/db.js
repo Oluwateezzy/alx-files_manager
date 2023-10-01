@@ -1,11 +1,13 @@
 const { MongoClient } = require('mongodb');
 class DBClient{
     constructor(){
-        const host = process.env.DB_HOST || 'localhost'
-        const port = process.env.DB_PORT || 27017
-        const name = process.env.DB_DATABASE || 'files_manager'
-        const url = `mongodb://${host}:${port}/${name}`
-        this.mongocli = new MongoClient(url, {
+        const host = process.env.DB_HOST || '127.0.0.1';
+        const port = process.env.DB_PORT || 27017;
+        const database = process.env.DB_DATABASE || 'files_manager';
+        const dbURL = `mongodb://${host}:${port}`;
+        console.log(dbURL)
+        
+        this.mongocli = new MongoClient(dbURL, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         })
@@ -36,4 +38,32 @@ class DBClient{
 }
 
 const dbClient = new DBClient()
-module.exports = dbClient
+// module.exports = dbClient
+const waitConnection = () => {
+    return new Promise((resolve, reject) => {
+        let i = 0;
+        const repeatFct = async () => {
+            await setTimeout(() => {
+                i += 1;
+                if (i >= 10) {
+                    reject()
+                }
+                else if(!dbClient.isAlive()) {
+                    repeatFct()
+                }
+                else {
+                    resolve()
+                }
+            }, 1000);
+        };
+        repeatFct();
+    })
+};
+
+(async () => {
+    console.log(dbClient.isAlive());
+    await waitConnection();
+    console.log(dbClient.isAlive());
+    console.log(await dbClient.nbUsers());
+    console.log(await dbClient.nbFiles());
+})();
