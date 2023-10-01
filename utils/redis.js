@@ -22,7 +22,7 @@ class RegisClient {
   }
 
   async get(key){
-    return await this.getAsyn(key)
+    return this.getAsyn(key)
   }
 
   async set(key, value, time){
@@ -30,7 +30,7 @@ class RegisClient {
   }
 
   async del(key) {
-    return await this.delAsyn(key)
+    return this.delAsyn(key)
   }
 }
 
