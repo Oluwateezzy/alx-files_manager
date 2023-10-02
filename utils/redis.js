@@ -34,5 +34,5 @@ class RegisClient {
   }
 }
 
-const regisClient = new RegisClient()
-module.exports = regisClient
+const redisClient = new RegisClient()
+module.exports = redisClient
