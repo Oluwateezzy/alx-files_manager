@@ -1,0 +1,30 @@
+{
+  "newUser": {
+    "result": { "n": 1, "ok": 1 },
+    "connection": {
+      "_events": {},
+      "_eventsCount": 4,
+      "id": 1,
+      "address": "127.0.0.1:27017",
+      "bson": {},
+      "socketTimeout": 0,
+      "host": "127.0.0.1",
+      "port": 27017,
+      "monitorCommands": false,
+      "closed": false,
+      "destroyed": false,
+      "lastIsMasterMS": 68
+    },
+    "ops": [
+      {
+        "email": "bob@dylan.com",
+        "password": "89cad29e3ebc1035b29b1478a8e70854f25fa2b2",
+        "_id": "651ac1538c6c781aec21af0b"
+      }
+    ],
+    "insertedCount": 1,
+    "insertedId": "651ac1538c6c781aec21af0b",
+    "n": 1,
+    "ok": 1
+  }
+}

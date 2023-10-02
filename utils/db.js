@@ -35,6 +35,14 @@ class DBClient{
         const count = await filesCollection.countDocuments()
         return count
     }
+
+    async usersCollection(){
+        return this.mongocli.db().collection('users')
+    }
+
+    async filesCollection(){
+        return this.mongocli.db().collection('files')
+    }
 }
 
 const dbClient = new DBClient()
