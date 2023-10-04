@@ -1,3 +1,6 @@
+import redisClient from "../utils/redis";
+import mongoDBCore from 'mongodb/lib/core';
+
 const dbClient = require("../utils/db")
 const sha1 = require('sha1')
 
@@ -24,5 +27,26 @@ export async function authenticate(req, res, next){
     }
     req.user = user
     console.log(user)
+    next()
+}
+
+export async function xTokenAuth(req, res, next){
+    const token = req.headers['x-token']
+    if(!token){
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
+    const userId = await redisClient.get(`auth_${token}`)
+    if (!userId){
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
+    const user = await (await dbClient.usersCollection())
+    .findOne({ _id: new mongoDBCore.BSON.ObjectId(userId) });
+    if (!user){
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
+    req.user = user
     next()
 }

@@ -9,7 +9,9 @@ class AuthController {
         res.status(200).json({token})
     }
     static async getDisconnect(req, res){
-        
+        const token = req.headers['x-token']
+        await redisClient.del(`auth_${token}`)
+        res.status(204).send()
     }
 }
 module.exports = AuthController

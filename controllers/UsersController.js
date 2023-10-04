@@ -24,5 +24,9 @@ class UsersController {
         const id = newUser.insertedId.toString()
         res.status(201).json({email, id})
     }
+    static async getMe(req, res) {
+        const user = req.user
+        res.status.json({email: user.email, id: user._id.toString()})
+    }
 }
 module.exports = UsersController
