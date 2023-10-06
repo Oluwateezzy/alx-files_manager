@@ -9,7 +9,9 @@ const { uuidV4 } = require('mongodb/lib/core/utils');
 const { v4 } = require('uuid')
 const { tmpdir } = require('os');
 const {promisify} = require('util')
-const Queue = require('bull/lib/queue')
+const Queue = require('bull/lib/queue');
+const { isPromise } = require("util/types");
+const { contentType } = require("mime-types");
 
 const fileType = ["folder", "image", "file"]
 const filePath = process.env.FOLDER_PATH || '/tmp/files_manager'
@@ -138,8 +140,75 @@ class FilesController{
         res.status(200).json(files)
     }
 
-    static async putPublish(req, res){}
-    static async putUnpublish(req, res){}
+    static async putPublish(req, res){
+        const user = req.user
+        const {id} = req.params
+        const file = await (await dbClient.filesCollection()).findOne({
+            userId: new mongoDBCore.BSON.ObjectId(user._id),
+            _id: new mongoDBCore.BSON.ObjectId(id)
+        })
+        if (!file){
+            return res.status(404).json({error: 'Not found'})
+        }
+        await (await dbClient.filesCollection()).updateOne(
+            file,
+            {$set: {isPublic: true}}
+        )
+        res.status(200).json({
+            id,
+            userId: user._id,
+            name: file.name,
+            type: file.type,
+            isPublic: true,
+            parentId: file.parentId.toString() || 0
+        })
+    }
+    static async putUnpublish(req, res){
+        const user = req.user
+        const {id} = req.params
+        const file = await (await dbClient.filesCollection()).findOne({
+            userId: new mongoDBCore.BSON.ObjectId(user._id),
+            _id: new mongoDBCore.BSON.ObjectId(id)
+        })
+        if (!file){
+            return res.status(404).json({error: 'Not found'})
+        }
+        await (await dbClient.filesCollection()).updateOne(
+            file,
+            {$set: {isPublic: false}}
+        )
+        res.status(200).json({
+            id,
+            userId: user._id,
+            name: file.name,
+            type: file.type,
+            isPublic: false,
+            parentId: file.parentId.toString() || 0
+        })
+    }
+    static async getFile(req, res){
+        const user = req.user
+        const {id} = req.params
+        const file = await (await dbClient.filesCollection()).findOne({
+            _id: new mongoDBCore.BSON.ObjectId(id)
+        })
+        const userId = user._id.toString()
+        if (!file){
+            return res.status(404).json({error: 'Not found'})
+        }
+        if (!file.isPublic && file.userId.toString() !== userId){
+            return res.status(404).json({error: 'Not found'})
+        }
+        if (file.type === 'folder'){
+            return res.status(400).json({error: "A folder doesn't have content"})
+        }
+        if (!fs.existsSync(file.localPath)){
+            return res.status(404).json({error: 'Not found'})
+        }
+        const content = await fs.readFileSync(file.localPath).toString()
+        res.setHeader('Content-Type', contentType(file.name) || 'text/plain; charset=utf-8')
+        res.status(200).send(content)
+    }
 }
 
 module.exports = FilesController

@@ -2,7 +2,7 @@ const express = require('express')
 const {getStats, getStatus} = require('../controllers/AppController')
 const {postNew, getMe} = require('../controllers/UsersController')
 const {getConnect, getDisconnect} = require('../controllers/AuthController')
-const {postUpload, getIndex, getShow, putUnpublish, putPublish} = require('../controllers/FilesController')
+const {postUpload, getIndex, getShow, putUnpublish, putPublish, getFile} = require('../controllers/FilesController')
 const { authenticate, xTokenAuth } = require('../middleware/auth')
 const route = express.Router()
 
@@ -17,6 +17,7 @@ route.get('/files/:id', xTokenAuth, getShow)
 route.get('/files', xTokenAuth, getIndex)
 route.put('/files/:id/publish', xTokenAuth, putPublish)
 route.put('/files/:id/unpublish', xTokenAuth, putUnpublish)
+route.get('/files/:id/data', xTokenAuth, getFile)
 
 
 module.exports = route
