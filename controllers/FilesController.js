@@ -2,20 +2,15 @@ const dbClient = require("../utils/db")
 const mongoDBCore = require('mongodb/lib/core');
 const fs = require('fs');
 const path = require('path');
-// const {
-//   mkdir, writeFile, stat, existsSync, realpath,
-// } = require('fs');
-const { uuidV4 } = require('mongodb/lib/core/utils');
 const { v4 } = require('uuid')
 const { tmpdir } = require('os');
-const {promisify} = require('util')
 const Queue = require('bull/lib/queue');
-const { isPromise } = require("util/types");
 const { contentType } = require("mime-types");
+
+const fileQueue = new Queue('thumbnail generation');
 
 const fileType = ["folder", "image", "file"]
 const filePath = process.env.FOLDER_PATH || '/tmp/files_manager'
-const fileQueue = new Queue('thumbnail generation')
 
 
 class FilesController{
@@ -74,9 +69,9 @@ class FilesController{
         }
         const insertInfo = await (await dbClient.filesCollection()).insertOne(newFile)
         const field = insertInfo.insertedId.toString()
-        if (type === 'image'){
-            const jobName = `Image thumbnail [${userId}-${field}]`
-            fileQueue.add({userId, field, name: jobName})
+        if (type === 'image') {
+            const jobName = `Image thumbnail [${userId}-${field}]`;
+            fileQueue.add({ userId, field, name: jobName });
         }
         res.status(201).json({
             id: field,
@@ -192,6 +187,7 @@ class FilesController{
         const file = await (await dbClient.filesCollection()).findOne({
             _id: new mongoDBCore.BSON.ObjectId(id)
         })
+        const size = req.query.size || null;
         const userId = user._id.toString()
         if (!file){
             return res.status(404).json({error: 'Not found'})
@@ -202,10 +198,14 @@ class FilesController{
         if (file.type === 'folder'){
             return res.status(400).json({error: "A folder doesn't have content"})
         }
-        if (!fs.existsSync(file.localPath)){
+        let fileSize = file.localPath
+        if (size){
+            fileSize = `${file.localPath}_${size}`
+        }
+        if (!fs.existsSync(fileSize)){
             return res.status(404).json({error: 'Not found'})
         }
-        const content = await fs.readFileSync(file.localPath).toString()
+        const content = await fs.readFileSync(fileSize).toString()
         res.setHeader('Content-Type', contentType(file.name) || 'text/plain; charset=utf-8')
         res.status(200).send(content)
     }
