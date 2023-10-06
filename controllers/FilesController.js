@@ -85,6 +85,61 @@ class FilesController{
             parentId
         })
     }
+
+    static async getShow(req, res){
+        const user = req.user
+        const {id} = req.params
+        console.log(id)
+        const file = await (await dbClient.filesCollection()).findOne({
+            _id: new mongoDBCore.BSON.ObjectId(id),
+            userId: new mongoDBCore.BSON.ObjectId(user._id)
+        })
+        if (!file){
+            return res.status(404).json({error: 'Not found'})
+        }
+        res.status(200).json({
+            id,
+            userId: user._id,
+            name: file.name,
+            type: file.type,
+            isPublic: file.isPublic,
+            parentId: file.parentId.toString()
+        })
+    }
+    static async getIndex(req, res){
+        const user = req.user
+        const {parentId, page} = req.query
+        const itemPerPage = 20
+        const skip = page ? parseInt(page) * itemPerPage : 0
+        const matchStage = {
+            userId: user._id,
+            parentId: parentId || 0
+        }
+        const files = await (await (await dbClient.filesCollection()).aggregate([
+            {$match: matchStage},
+            {$sort: { _id: -1}
+            },
+            {$skip: skip},
+            {$limit: itemPerPage},
+            {
+                $project: {
+                    _id: 0,
+                    id: '$_id',
+                    userId: '$userId',
+                    name: '$name',
+                    type: '$type',
+                    isPublic: '$isPublic',
+                    parentId: {
+                        $cond: { if: { $eq: ['$parentId', '0'] }, then: 0, else: '$parentId' },
+                    },
+                }
+            }
+        ])).toArray()
+        res.status(200).json(files)
+    }
+
+    static async putPublish(req, res){}
+    static async putUnpublish(req, res){}
 }
 
 module.exports = FilesController
