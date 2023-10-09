@@ -10,7 +10,7 @@ const { authenticate, xTokenAuth } = require('../middleware/auth');
 const route = express.Router();
 
 route.get('/status', getStatus);
-route.get('/stat', getStats);
+route.get('/stats', getStats);
 route.post('/users', postNew);
 route.get('/connect', authenticate, getConnect);
 route.get('/disconnect', xTokenAuth, getDisconnect);
